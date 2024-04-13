@@ -1,36 +1,55 @@
 import { Injectable } from '@nestjs/common';
-import { ITrip } from './trip.interface';
 import { CreateTripDto } from './create-trip-dto';
-import crypto from 'crypto';
+import { TripRepository } from './trip.repository';
+import { Rider } from '../rider/rider.entity';
+import { DriverRepository } from '../driver/driver.repository';
+import { RiderRepository } from '../rider/rider.repository';
+import { InjectRepository } from '@mikro-orm/nestjs';
+import { Driver } from '../driver/driver.entity';
+import { Trip } from './trip.entity';
+import { EntityManager } from '@mikro-orm/core';
 
 @Injectable()
 export class TripService {
-  trips: ITrip[] = [];
+  constructor(
+    @InjectRepository(Driver)
+    private readonly driverRepository: DriverRepository,
+    @InjectRepository(Rider)
+    private readonly riderRepository: RiderRepository,
+    @InjectRepository(Trip)
+    private readonly tripRepository: TripRepository,
+    private readonly em: EntityManager,
+  ) {}
 
-  create(createRideDto: CreateTripDto) {
-    const newTrip: ITrip = {
-      id: crypto.randomUUID(),
-      timestamp: Date.now(),
-      riderId: createRideDto.riderId,
-      driverId: createRideDto.driverId,
-      fromCoordinate: createRideDto.fromCoordinate,
-      toCoordinate: createRideDto.toCoordinate,
-      status: 'in_progress',
-    };
+  async create(createTripDto: CreateTripDto) {
+    const driver = await this.driverRepository.findOneOrFail({
+      id: createTripDto.driverId,
+    });
 
-    this.trips.push(newTrip);
+    const rider = await this.riderRepository.findOneOrFail({
+      id: createTripDto.riderId,
+    });
 
-    return { id: newTrip.id };
+    const newTrip = new Trip(
+      rider,
+      driver,
+      createTripDto.fromCoordinate,
+      createTripDto.toCoordinate,
+    );
+
+    const res = await this.tripRepository.insert(newTrip);
+
+    return { tripId: res };
   }
 
-  active() {
-    return this.trips.filter((d) => d.status === 'in_progress');
+  async active() {
+    return this.tripRepository.findAll({ where: { status: 'in_progress' } });
   }
 
-  finish(id: string) {
-    const tripIndex = this.trips.findIndex((trip) => trip.id === id);
-    if (tripIndex !== -1 && this.trips[tripIndex].status === 'in_progress') {
-      this.trips[tripIndex].status = 'finished';
-    }
+  async finish(id: string) {
+    const trip = await this.tripRepository.findOneOrFail({ id });
+    trip.status = 'finished';
+    //this.tripRepository.assign(trip, { status: 'finished' });
+    await this.em.persistAndFlush(trip);
   }
 }

@@ -1,62 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { IDriver } from './driver.interface';
 import { calculateDistance } from '../calculate-distance';
+import { EntityManager, serialize } from '@mikro-orm/core';
+import { DriverRepository } from './driver.repository';
 
 @Injectable()
 export class DriverService {
-  private readonly drivers: IDriver[] = [
-    {
-      id: '1',
-      name: 'The Driver',
-      isAvailable: true,
-      currentLocation: {
-        // torre bbva
-        latitude: 19.4221649,
-        longitude: -99.1742946,
-      },
-    },
-    {
-      id: '2',
-      name: 'Baby',
-      isAvailable: true,
-      currentLocation: {
-        // WTC
-        latitude: 19.3933444,
-        longitude: -99.1773013,
-      },
-    },
-    {
-      id: '3',
-      name: 'Max Rockatansky',
-      isAvailable: true,
-      currentLocation: {
-        // auditorio nacional
-        latitude: 19.4297761,
-        longitude: -99.1976849,
-      },
-    },
-    {
-      id: '4',
-      name: 'Dominic Toretto',
-      isAvailable: true,
-      currentLocation: {
-        // perisur
-        latitude: 19.302935,
-        longitude: -99.1906983,
-      },
-    },
-  ];
+  constructor(
+    private readonly driverRepository: DriverRepository,
+    private readonly em: EntityManager,
+  ) {}
 
-  all() {
-    return this.drivers;
+  async all() {
+    return await this.driverRepository.findAll();
   }
 
-  availableOnly() {
-    return this.drivers.filter((driver) => driver.isAvailable === true);
+  async availableOnly() {
+    return this.driverRepository.findAll({ where: { isAvailable: true } });
   }
 
-  availableAt(lat: number, long: number, radius: number) {
-    return this.drivers.filter((driver) => {
+  async availableAt(lat: number, long: number, radius: number) {
+    const res = await this.driverRepository.findAll({
+      where: { isAvailable: true },
+    });
+
+    return res.filter((driver) => {
       return (
         driver.isAvailable === true &&
         calculateDistance(
@@ -69,13 +36,17 @@ export class DriverService {
     });
   }
 
-  byId(id: string) {
-    return this.drivers.find((driver: IDriver) => driver.id === id) ?? {};
+  async byId(id: string) {
+    return this.driverRepository.findOne({ id });
   }
 
-  closestTo(coordinates: number[], limit: number) {
-    return this.drivers
-      .filter((d) => d.isAvailable === true)
+  async closestTo(coordinates: number[], limit: number) {
+    const res = await this.driverRepository.findAll({
+      where: { isAvailable: true },
+      fields: ['currentLocation'],
+    });
+
+    return serialize(res)
       .map((d) => ({
         ...d,
         distance: calculateDistance(

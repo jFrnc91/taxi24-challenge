@@ -7,17 +7,17 @@ export class TripController {
   constructor(private tripService: TripService) {}
 
   @Get('active')
-  active() {
+  async active() {
     return this.tripService.active();
   }
 
   @Post()
-  request(@Body() createRideDto: CreateTripDto) {
+  async request(@Body() createRideDto: CreateTripDto) {
     return this.tripService.create(createRideDto);
   }
 
   @Patch(':id/finish')
-  finish(@Param('id') id: string) {
-    this.tripService.finish(id);
+  async finish(@Param('id') id: string) {
+    return this.tripService.finish(id);
   }
 }

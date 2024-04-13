@@ -1,21 +1,14 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { DriverController } from './driver/driver.controller';
-import { DriverService } from './driver/driver.service';
-import { RiderController } from './rider/rider.controller';
-import { RiderService } from './rider/rider.service';
-import { TripController } from './trip/trip.controller';
-import { TripService } from './trip/trip.service';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { DriverModule } from './driver/driver.module';
+import { RiderModule } from './rider/rider.module';
+import { TripModule } from './trip/trip.module';
 
 @Module({
-  imports: [],
-  controllers: [
-    AppController,
-    DriverController,
-    RiderController,
-    TripController,
-  ],
-  providers: [AppService, DriverService, RiderService, TripService],
+  imports: [MikroOrmModule.forRoot(), DriverModule, RiderModule, TripModule],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

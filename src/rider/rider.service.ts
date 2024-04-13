@@ -1,24 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { IRider } from './rider.interface';
+import { EntityManager } from '@mikro-orm/core';
+import { RiderRepository } from './rider.repository';
 
 @Injectable()
 export class RiderService {
-  private readonly riders: IRider[] = [
-    {
-      id: '1',
-      name: 'Jorge',
-      currentLocation: {
-        latitude: 1,
-        longitude: 1,
-      },
-    },
-  ];
+  constructor(
+    private readonly riderRepository: RiderRepository,
+    private readonly em: EntityManager,
+  ) {}
 
-  all(): IRider[] {
-    return this.riders;
+  async all() {
+    return this.riderRepository.findAll();
   }
 
-  byId(id: string): IRider {
-    return this.riders.find((rider) => rider.id === id);
+  async byId(id: string) {
+    return this.riderRepository.findOne({ id });
   }
 }

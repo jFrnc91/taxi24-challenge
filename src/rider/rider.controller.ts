@@ -6,12 +6,12 @@ export class RiderController {
   constructor(private readonly riderService: RiderService) {}
 
   @Get()
-  all() {
+  async all() {
     return this.riderService.all();
   }
 
   @Get(':id')
-  byId(@Param('id') id: string) {
+  async byId(@Param('id') id: string) {
     return this.riderService.byId(id);
   }
 }

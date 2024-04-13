@@ -5,7 +5,7 @@ export interface ITrip {
   timestamp: number;
   status: 'in_progress' | 'finished' | 'canceled';
   riderId: string;
-  driverId?: string;
+  driverId: string;
   fromCoordinate: Coordinate;
   toCoordinate: Coordinate;
 }
